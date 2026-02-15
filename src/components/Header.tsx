@@ -9,11 +9,14 @@ export default function Header({ hasApiConfig, onOpenConfig }: HeaderProps) {
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 bg-white rounded-lg flex items-center justify-center shadow-md border border-accent-gold/40 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-          <svg className="w-7 h-7 text-primary relative z-10" viewBox="0 0 100 100" fill="none">
-            {/* Horse head silhouette */}
-            <path d="M65 20C60 15 50 14 45 18C40 22 38 30 38 38L28 42C26 43 25 45 26 47L30 55C31 57 33 58 35 57L40 55C42 62 45 68 50 72L48 85C48 87 49 89 51 89L57 89C59 89 60 87 60 85L61 75C64 76 67 76 70 75L71 85C71 87 72 89 74 89L80 89C82 89 83 87 83 85L81 72C86 67 88 60 88 52C88 40 82 30 75 24C72 22 68 21 65 20Z" fill="currentColor" />
-            <circle cx="58" cy="32" r="3" fill="#d4a528" />
-            <path d="M42 18C38 12 30 10 26 14" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+          <svg className="w-7 h-7 relative z-10" viewBox="0 0 100 100" fill="none">
+            {/* Red envelope */}
+            <rect x="15" y="20" width="70" height="65" rx="8" fill="#DE2910" />
+            <rect x="15" y="20" width="70" height="25" rx="8" fill="#B71C1C" />
+            <path d="M15 37h70v8H15z" fill="#B71C1C" />
+            <circle cx="50" cy="45" r="14" fill="#FFD700" />
+            <circle cx="50" cy="45" r="10" fill="#DE2910" />
+            <text x="50" y="50" textAnchor="middle" fill="#FFD700" fontSize="14" fontWeight="bold" fontFamily="serif">福</text>
           </svg>
         </div>
         <div className="flex flex-col">

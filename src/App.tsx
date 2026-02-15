@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { Relationship, Length } from './types'
 import { useGenerate } from './hooks/useGenerate'
 import { useApiConfig } from './hooks/useApiConfig'
+import { getDefaultApiConfig } from './constants/defaultConfig'
 import Header from './components/Header'
 import InputPanel from './components/InputPanel'
 import ResultPanel from './components/ResultPanel'
@@ -10,9 +11,13 @@ import ErrorBoundary from './components/ErrorBoundary'
 import QueuePage from './components/QueuePage'
 import ApiConfigModal from './components/ApiConfigModal'
 
+const defaultConfig = getDefaultApiConfig()
+
 export default function App() {
   const { apiConfig, setApiConfig, clearApiConfig } = useApiConfig()
-  const { results, overallStatus, generate, cancel, reset } = useGenerate(apiConfig)
+  const activeConfig = apiConfig ?? defaultConfig
+  const isUsingDefault = !apiConfig && !!defaultConfig
+  const { results, overallStatus, generate, cancel, reset } = useGenerate(activeConfig)
 
   const [relationship, setRelationship] = useState<Relationship>('elder')
   const [length, setLength] = useState<Length>('medium')
@@ -21,16 +26,17 @@ export default function App() {
   const [reference, setReference] = useState('')
 
   const [showQueue, setShowQueue] = useState(false)
+  const [quotaExhausted, setQuotaExhausted] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
 
   const handleGenerate = useCallback(() => {
-    if (apiConfig) {
+    if (activeConfig) {
       generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
       return
     }
-    // No API config — show queue page
+    // No config at all — show queue page
     setShowQueue(true)
-  }, [apiConfig, generate, relationship, length, name, note, reference])
+  }, [activeConfig, generate, relationship, length, name, note, reference])
 
   const handleReset = useCallback(() => {
     reset()
@@ -42,6 +48,7 @@ export default function App() {
 
   const handleOpenConfig = useCallback(() => {
     setShowQueue(false)
+    setQuotaExhausted(false)
     setShowConfigModal(true)
   }, [])
 
@@ -58,6 +65,16 @@ export default function App() {
   }, [clearApiConfig])
 
   const showingResult = overallStatus !== 'idle'
+
+  // When using default key and all results fail, show "quota exhausted" overlay
+  const allFailed = results.every((r) => r.status === 'error')
+  useEffect(() => {
+    if (isUsingDefault && allFailed && showingResult) {
+      reset()
+      setQuotaExhausted(true)
+      setShowQueue(true)
+    }
+  }, [isUsingDefault, allFailed, showingResult, reset])
 
   return (
     <ErrorBoundary>
@@ -143,7 +160,8 @@ export default function App() {
       {showQueue && (
         <QueuePage
           onConfigureKey={handleOpenConfig}
-          onClose={() => setShowQueue(false)}
+          onClose={() => { setShowQueue(false); setQuotaExhausted(false) }}
+          exhausted={quotaExhausted}
         />
       )}
 

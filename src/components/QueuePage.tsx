@@ -3,12 +3,14 @@ import { useState, useEffect, useRef } from 'react'
 interface QueuePageProps {
   onConfigureKey: () => void
   onClose: () => void
+  /** Skip queue animation, go straight to exhausted state */
+  exhausted?: boolean
 }
 
 type Phase = 'queuing' | 'failed'
 
-export default function QueuePage({ onConfigureKey, onClose }: QueuePageProps) {
-  const [phase, setPhase] = useState<Phase>('queuing')
+export default function QueuePage({ onConfigureKey, onClose, exhausted }: QueuePageProps) {
+  const [phase, setPhase] = useState<Phase>(exhausted ? 'failed' : 'queuing')
   const [position, setPosition] = useState(() => Math.floor(Math.random() * (342 - 86 + 1)) + 86)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
   const phaseTimerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -84,8 +86,8 @@ export default function QueuePage({ onConfigureKey, onClose }: QueuePageProps) {
               </div>
             </div>
 
-            <h2 className="text-2xl font-serif font-black text-text-main mb-2">生成失败</h2>
-            <p className="text-text-muted text-sm mb-6">服务器繁忙，无法完成生成请求</p>
+            <h2 className="text-2xl font-serif font-black text-text-main mb-2">免费额度已用完</h2>
+            <p className="text-text-muted text-sm mb-6">公共额度已消耗完毕，配置自己的 API Key 即可继续使用</p>
 
             {/* CTA */}
             <button
