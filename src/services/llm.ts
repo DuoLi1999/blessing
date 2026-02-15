@@ -31,7 +31,7 @@ export function createGenerateStream(
   signal?: AbortSignal,
   userCredentials?: ApiConfig | null,
 ): void {
-  const body: Record<string, unknown> = { model, ...options }
+  const body: Record<string, unknown> = { model: userCredentials?.model || model, ...options }
   if (userCredentials) {
     body.userApiKey = userCredentials.apiKey
     body.userBaseUrl = userCredentials.baseUrl

@@ -22,7 +22,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { model, relationship, style, length, name, note, reference, userApiKey, userBaseUrl, userModel } = req.body || {}
 
   // Validate required fields
-  if (!model || !relationship || !style || !length) {
+  const hasUserCredentials = userApiKey && userBaseUrl && userModel
+  if ((!model && !hasUserCredentials) || !relationship || !style || !length) {
     return res.status(400).json({ error: '缺少必要参数: model, relationship, style, length' })
   }
 
