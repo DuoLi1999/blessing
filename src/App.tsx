@@ -1,11 +1,8 @@
 import { useState, useCallback } from 'react'
 import type { Relationship, Length } from './types'
-import { useModelSelect } from './hooks/useModelSelect'
 import { useGenerate } from './hooks/useGenerate'
-import { useFreeUsage } from './hooks/useFreeUsage'
 import { useApiConfig } from './hooks/useApiConfig'
 import Header from './components/Header'
-import ModelSelector from './components/ModelSelector'
 import InputPanel from './components/InputPanel'
 import ResultPanel from './components/ResultPanel'
 import Particles from './components/Particles'
@@ -14,10 +11,8 @@ import QueuePage from './components/QueuePage'
 import ApiConfigModal from './components/ApiConfigModal'
 
 export default function App() {
-  const { models, selectedModel, setSelectedModel, loading: modelsLoading, error: modelsError } = useModelSelect()
   const { apiConfig, setApiConfig, clearApiConfig } = useApiConfig()
-  const { results, overallStatus, generate, cancel, reset } = useGenerate(selectedModel, apiConfig)
-  const { freeUsed, markFreeUsed } = useFreeUsage()
+  const { results, overallStatus, generate, cancel, reset } = useGenerate(apiConfig)
 
   const [relationship, setRelationship] = useState<Relationship>('elder')
   const [length, setLength] = useState<Length>('medium')
@@ -28,21 +23,14 @@ export default function App() {
   const [showQueue, setShowQueue] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
 
-  const canGenerate = !!selectedModel || !!apiConfig
-
   const handleGenerate = useCallback(() => {
     if (apiConfig) {
       generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
       return
     }
-    if (!selectedModel) return
-    if (freeUsed) {
-      setShowQueue(true)
-      return
-    }
-    markFreeUsed()
-    generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
-  }, [apiConfig, selectedModel, freeUsed, markFreeUsed, generate, relationship, length, name, note, reference])
+    // No API config — show queue page
+    setShowQueue(true)
+  }, [apiConfig, generate, relationship, length, name, note, reference])
 
   const handleReset = useCallback(() => {
     reset()
@@ -104,19 +92,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* Model Selector - hidden when user has their own API config */}
-          {!apiConfig && (
-            <div className="mb-6">
-              <ModelSelector
-                models={models}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                loading={modelsLoading}
-                error={modelsError}
-              />
-            </div>
-          )}
-
           {/* Divider */}
           <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/30 to-transparent mb-8 relative">
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rotate-45 border border-accent-gold bg-bg-warm" />
@@ -137,7 +112,7 @@ export default function App() {
               onReferenceChange={setReference}
               onGenerate={handleGenerate}
               isGenerating={false}
-              canGenerate={canGenerate}
+              canGenerate={true}
             />
           ) : (
             <ResultPanel

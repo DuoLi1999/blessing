@@ -1,4 +1,7 @@
-import type { ModelInfo, ApiConfig } from '../types'
+import type { ApiConfig, GenerateOptions, Relationship, Style, Length } from '../types'
+import { buildPrompt } from './promptBuilder'
+import type { FewShotData } from './promptBuilder'
+import { getBlessings, pickRandom } from './blessingStore'
 
 export interface StreamCallbacks {
   onToken: (token: string) => void
@@ -6,55 +9,60 @@ export interface StreamCallbacks {
   onError: (error: Error) => void
 }
 
-/** Fetch available models from the server */
-export async function fetchModels(): Promise<ModelInfo[]> {
-  const res = await fetch('/api/models')
-  if (!res.ok) {
-    throw new Error(`获取模型列表失败 (${res.status})`)
-  }
-  const data = await res.json()
-  return data.models || []
-}
-
-/** Create a streaming generation request */
+/** Create a streaming generation request directly to the user's LLM API */
 export function createGenerateStream(
-  model: string,
-  options: {
-    relationship: string
-    style: string
-    length: string
-    name?: string
-    note?: string
-    reference?: string
-  },
+  apiConfig: ApiConfig,
+  options: GenerateOptions,
   callbacks: StreamCallbacks,
   signal?: AbortSignal,
-  userCredentials?: ApiConfig | null,
 ): void {
-  const body: Record<string, unknown> = { model: userCredentials?.model || model, ...options }
-  if (userCredentials) {
-    body.userApiKey = userCredentials.apiKey
-    body.userBaseUrl = userCredentials.baseUrl
-    body.userModel = userCredentials.model
-  }
+  // Build few-shot examples from local blessings data
+  const { entries, matchLevel } = getBlessings(
+    options.relationship as Relationship,
+    options.style as Style,
+    options.length as Length,
+  )
+  const fewShotExamples = entries.length > 0
+    ? pickRandom(entries, 3).map((e) => e.text)
+    : []
+  const fewShot: FewShotData | undefined = fewShotExamples.length > 0
+    ? { examples: fewShotExamples, matchLevel }
+    : undefined
 
-  fetch('/api/generate', {
+  // Build prompt locally
+  const { system, user } = buildPrompt(options, fewShot)
+
+  const url = `${apiConfig.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+
+  fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiConfig.apiKey}`,
+    },
+    body: JSON.stringify({
+      model: apiConfig.model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      temperature: 0.9,
+      max_tokens: 1024,
+      stream: true,
+    }),
     signal,
   })
     .then(async (response) => {
       if (!response.ok) {
-        const body = await response.text().catch(() => '')
+        const text = await response.text().catch(() => '')
         let msg: string
         try {
-          msg = JSON.parse(body).error || body
+          msg = JSON.parse(text).error?.message || JSON.parse(text).error || text
         } catch {
-          msg = body
+          msg = text
         }
         if (response.status === 401) {
-          throw new Error('API Key 无效，请联系管理员')
+          throw new Error('API Key 无效，请检查配置')
         }
         if (response.status === 429) {
           throw new Error('请求过于频繁，请稍后重试')
@@ -86,8 +94,9 @@ export function createGenerateStream(
           }
           try {
             const parsed = JSON.parse(data)
-            if (parsed.token) {
-              callbacks.onToken(parsed.token)
+            const content = parsed.choices?.[0]?.delta?.content
+            if (content) {
+              callbacks.onToken(content)
             }
           } catch {
             // Skip malformed JSON

@@ -1,4 +1,4 @@
-import type { Relationship, Style, Length, GenerateOptions } from './types.js'
+import type { Relationship, Style, Length, GenerateOptions } from '../types'
 
 export type MatchLevel = 'exact' | 'relaxed' | 'cross-rel'
 

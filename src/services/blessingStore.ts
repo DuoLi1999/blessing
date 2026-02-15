@@ -1,7 +1,5 @@
-import { createRequire } from 'node:module'
-const require = createRequire(import.meta.url)
-const blessingsData = require('../blessings.json')
-import type { Relationship, Style, Length } from './types.js'
+import blessingsData from '../../blessings.json'
+import type { Relationship, Style, Length } from '../types'
 
 export type MatchLevel = 'exact' | 'relaxed' | 'cross-rel'
 
@@ -16,7 +14,6 @@ interface GetBlessingsResult {
   matchLevel: MatchLevel
 }
 
-// Static import ensures blessings.json is bundled by Vercel's esbuild
 const blessings: Record<string, Record<string, Record<string, BlessingEntry[]>>> =
   blessingsData && typeof blessingsData === 'object' && 'blessings' in blessingsData
     ? (blessingsData as { blessings: Record<string, Record<string, Record<string, BlessingEntry[]>>> }).blessings

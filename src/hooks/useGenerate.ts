@@ -23,7 +23,7 @@ function makeInitial(): StyleResult[] {
   }))
 }
 
-export function useGenerate(selectedModel: string, apiConfig?: ApiConfig | null) {
+export function useGenerate(apiConfig: ApiConfig | null) {
   const [results, setResults] = useState<StyleResult[]>(makeInitial)
   const abortsRef = useRef<AbortController[]>([])
 
@@ -32,6 +32,8 @@ export function useGenerate(selectedModel: string, apiConfig?: ApiConfig | null)
   }, [])
 
   const generate = useCallback((baseOptions: Omit<GenerateOptions, 'style'>) => {
+    if (!apiConfig) return
+
     // Abort any running streams
     abortsRef.current.forEach((c) => c.abort())
     abortsRef.current = []
@@ -51,7 +53,7 @@ export function useGenerate(selectedModel: string, apiConfig?: ApiConfig | null)
       abortsRef.current.push(controller)
 
       createGenerateStream(
-        selectedModel,
+        apiConfig,
         { ...baseOptions, style: s.id },
         {
           onToken: (token) => {
@@ -67,10 +69,9 @@ export function useGenerate(selectedModel: string, apiConfig?: ApiConfig | null)
           },
         },
         controller.signal,
-        apiConfig,
       )
     })
-  }, [selectedModel, apiConfig, updateOne])
+  }, [apiConfig, updateOne])
 
   const cancel = useCallback(() => {
     abortsRef.current.forEach((c) => c.abort())
