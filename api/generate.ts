@@ -14,6 +14,7 @@ const VALID_STYLES: Style[] = ['normal', 'literary', 'abstract']
 const VALID_LENGTHS: Length[] = ['short', 'medium', 'long']
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  try {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -145,6 +146,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!res.headersSent) {
       const message = err instanceof Error ? err.message : String(err)
       res.status(502).json({ error: `代理请求失败: ${message}` })
+    }
+  }
+  } catch (outerErr) {
+    console.error('Unhandled error in generate handler:', outerErr)
+    if (!res.headersSent) {
+      const message = outerErr instanceof Error ? outerErr.message : String(outerErr)
+      res.status(500).json({ error: `服务器内部错误: ${message}` })
     }
   }
 }
