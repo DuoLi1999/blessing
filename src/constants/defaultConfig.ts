@@ -17,11 +17,6 @@ const DEFAULT_PROVIDERS: DefaultProvider[] = [
     baseUrl: 'https://api.deepseek.com/v1',
     model: 'deepseek-chat',
   },
-  {
-    key: import.meta.env.VITE_MINIMAX_API_KEY,
-    baseUrl: 'https://api.minimax.chat/v1',
-    model: 'MiniMax-Text-01',
-  },
 ]
 
 /** All available built-in configs (those with keys set) */
