@@ -1,5 +1,6 @@
-import blessingsData from '../blessings.json'
-import type { Relationship, Style, Length } from './types'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const blessingsData = require('../blessings.json')
+import type { Relationship, Style, Length } from './types.js'
 
 export type MatchLevel = 'exact' | 'relaxed' | 'cross-rel'
 

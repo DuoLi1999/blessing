@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getProviderConfigByModel } from '../lib/providers'
-import { buildPrompt } from '../lib/promptBuilder'
-import type { FewShotData } from '../lib/promptBuilder'
-import { getBlessings, pickRandom } from '../lib/blessingStore'
-import type { Relationship, Style, Length } from '../lib/types'
+import { getProviderConfigByModel } from '../lib/providers.js'
+import { buildPrompt } from '../lib/promptBuilder.js'
+import type { FewShotData } from '../lib/promptBuilder.js'
+import { getBlessings, pickRandom } from '../lib/blessingStore.js'
+import type { Relationship, Style, Length } from '../lib/types.js'
 
 export const config = {
   maxDuration: 60,
