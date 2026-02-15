@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import type { Style, GenerateOptions, ApiConfig } from '../types'
 import { STYLES } from '../types'
 import { createGenerateStream } from '../services/llm'
+import { getRandomDefaultConfig } from '../constants/defaultConfig'
 
 export type GenerateStatus = 'idle' | 'generating' | 'done' | 'error'
 
@@ -23,7 +24,7 @@ function makeInitial(): StyleResult[] {
   }))
 }
 
-export function useGenerate(apiConfig: ApiConfig | null) {
+export function useGenerate(userConfig: ApiConfig | null) {
   const [results, setResults] = useState<StyleResult[]>(makeInitial)
   const abortsRef = useRef<AbortController[]>([])
 
@@ -32,8 +33,6 @@ export function useGenerate(apiConfig: ApiConfig | null) {
   }, [])
 
   const generate = useCallback((baseOptions: Omit<GenerateOptions, 'style'>) => {
-    if (!apiConfig) return
-
     // Abort any running streams
     abortsRef.current.forEach((c) => c.abort())
     abortsRef.current = []
@@ -47,13 +46,19 @@ export function useGenerate(apiConfig: ApiConfig | null) {
       error: '',
     })))
 
-    // Launch 3 parallel streams
+    // Launch 3 parallel streams, each with a random default config if no user config
     STYLES.forEach((s) => {
+      const config = userConfig ?? getRandomDefaultConfig()
+      if (!config) {
+        updateOne(s.id, { status: 'error', error: '无可用配置' })
+        return
+      }
+
       const controller = new AbortController()
       abortsRef.current.push(controller)
 
       createGenerateStream(
-        apiConfig,
+        config,
         { ...baseOptions, style: s.id },
         {
           onToken: (token) => {
@@ -71,7 +76,7 @@ export function useGenerate(apiConfig: ApiConfig | null) {
         controller.signal,
       )
     })
-  }, [apiConfig, updateOne])
+  }, [userConfig, updateOne])
 
   const cancel = useCallback(() => {
     abortsRef.current.forEach((c) => c.abort())

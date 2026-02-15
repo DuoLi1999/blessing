@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_DEFAULT_API_KEY?: string
+  readonly VITE_DEEPSEEK_API_KEY?: string
+  readonly VITE_MINIMAX_API_KEY?: string
 }
 
 interface ImportMeta {

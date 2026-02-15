@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react'
 import type { Relationship, Length } from './types'
 import { useGenerate } from './hooks/useGenerate'
 import { useApiConfig } from './hooks/useApiConfig'
-import { getDefaultApiConfig } from './constants/defaultConfig'
 import Header from './components/Header'
 import InputPanel from './components/InputPanel'
 import ResultPanel from './components/ResultPanel'
@@ -10,14 +9,12 @@ import Particles from './components/Particles'
 import ErrorBoundary from './components/ErrorBoundary'
 import QueuePage from './components/QueuePage'
 import ApiConfigModal from './components/ApiConfigModal'
-
-const defaultConfig = getDefaultApiConfig()
+import QrModal from './components/QrModal'
 
 export default function App() {
   const { apiConfig, setApiConfig, clearApiConfig } = useApiConfig()
-  const activeConfig = apiConfig ?? defaultConfig!
   const isUsingDefault = !apiConfig
-  const { results, overallStatus, generate, cancel, reset } = useGenerate(activeConfig)
+  const { results, overallStatus, generate, cancel, reset } = useGenerate(apiConfig)
 
   const [relationship, setRelationship] = useState<Relationship>('elder')
   const [length, setLength] = useState<Length>('medium')
@@ -27,6 +24,7 @@ export default function App() {
 
   const [showQueue, setShowQueue] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
+  const [qrFirst, setQrFirst] = useState<'douyin' | 'xiaohongshu' | null>(null)
 
   const handleGenerate = useCallback(() => {
     generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
@@ -99,6 +97,19 @@ export default function App() {
             <p className="text-text-muted text-sm mt-3 max-w-sm mx-auto leading-relaxed">
               AI 驱动的新春祝福语生成器，为不同关系量身定制
             </p>
+
+            {/* Social icons */}
+            <div className="flex flex-col items-center mt-3">
+              <div className="flex items-center justify-center gap-3">
+                <button onClick={() => setQrFirst('douyin')} className="w-7 h-7 flex items-center justify-center hover:opacity-70 transition-opacity" title="抖音">
+                  <img src="/douyin-icon.png" alt="抖音" className="w-7 h-7 object-contain" />
+                </button>
+                <button onClick={() => setQrFirst('xiaohongshu')} className="w-7 h-7 flex items-center justify-center hover:opacity-70 transition-opacity" title="小红书">
+                  <img src="/xiaohongshu-icon.png" alt="小红书" className="w-7 h-7 object-contain" />
+                </button>
+              </div>
+              <span className="text-[0.6rem] text-text-muted/60 mt-1.5">关注我们</span>
+            </div>
           </div>
 
           {/* Divider */}
@@ -147,6 +158,11 @@ export default function App() {
           </p>
         </footer>
       </div>
+
+      {/* QR code modal */}
+      {qrFirst && (
+        <QrModal first={qrFirst} onClose={() => setQrFirst(null)} />
+      )}
 
       {/* Queue overlay */}
       {showQueue && (
