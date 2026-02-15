@@ -9,37 +9,37 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
   {
     id: 'deepseek',
     name: 'DeepSeek',
-    baseUrl: 'https://api.deepseek.com',
+    baseUrl: 'https://api.deepseek.com/v1',
     model: 'deepseek-chat',
   },
   {
     id: 'openai',
     name: 'OpenAI',
-    baseUrl: 'https://api.openai.com',
+    baseUrl: 'https://api.openai.com/v1',
     model: 'gpt-4o-mini',
   },
   {
     id: 'zhipu',
     name: '智谱',
-    baseUrl: 'https://open.bigmodel.cn/api/paas',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
     model: 'glm-4-flash',
   },
   {
     id: 'dashscope',
     name: '通义',
-    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     model: 'qwen-plus',
   },
   {
     id: 'siliconflow',
     name: '硅基',
-    baseUrl: 'https://api.siliconflow.cn',
+    baseUrl: 'https://api.siliconflow.cn/v1',
     model: 'deepseek-ai/DeepSeek-V3',
   },
   {
     id: 'moonshot',
     name: '月之暗面',
-    baseUrl: 'https://api.moonshot.cn',
+    baseUrl: 'https://api.moonshot.cn/v1',
     model: 'moonshot-v1-8k',
   },
 ]

@@ -1,0 +1,280 @@
+Plan to implement
+
+Blessing 项目：添加后端 + 部署到 Vercel
+
+Context
+
+当前 Blessing（新春祝福生成器）是一个 React + Vite 前端 + Express 后端的项目。
+- 当前问题：用户需要自己填写 API Key 才能使用（不安全、体验差）
+- 目标：服务端持有 API Key，用户只需选择模型即可生成祝福
+- 部署平台：Vercel（无需备案，前端 + Serverless Functions 一体化部署）
+
+现有代码关键文件
+
+文件: server/index.js
+作用: Express 后端，代理 LLM API（当前接受客户端传的 API Key）
+────────────────────────────────────────
+文件: server/providers.js
+作用: 6 个 LLM 提供商配置（DeepSeek、OpenAI、智谱、月之暗面、通义、硅基流动）
+────────────────────────────────────────
+文件: src/services/llm.ts
+作用: 前端调用 /api/chat 的 SSE 流式客户端
+────────────────────────────────────────
+文件: src/hooks/useGenerate.ts
+作用: 管理 3 个并行流式生成（每种 style 一个）
+────────────────────────────────────────
+文件: src/hooks/useProviders.ts
+作用: Provider + API Key 的 localStorage 管理
+────────────────────────────────────────
+文件: src/skills/promptBuilder.ts
+作用: Prompt 构建（203 行，包含关系、风格、长度等维度）
+────────────────────────────────────────
+文件: src/skills/blessingStore.ts
+作用: 从 blessings.json 加载 few-shot 示例（4 级 fallback）
+────────────────────────────────────────
+文件: src/components/ApiConfigModal.tsx
+作用: API Key 输入弹窗
+────────────────────────────────────────
+文件: blessings.json
+作用: 122 条预生成祝福语示例库
+
+项目结构变更
+
+blessing/
+├── api/                             # Vercel Serverless Functions（新增）
+│   ├── generate.ts                  # POST /api/generate（SSE 流式）
+│   ├── models.ts                    # GET /api/models
+│   └── health.ts                    # GET /api/health
+├── lib/                             # 服务端共享代码（新增）
+│   ├── providers.ts                 # Provider 注册表（从 server/providers.js 迁移改造）
+│   ├── promptBuilder.ts             # Prompt 构建（从 src/skills/ 迁移）
+│   └── blessingStore.ts             # Few-shot 示例（从 src/skills/ 迁移）
+├── src/                             # 前端（修改）
+│   ├── services/llm.ts             # 改为调用 /api/generate + /api/models
+│   ├── hooks/useGenerate.ts        # 去掉 apiKey 参数，改用 model
+│   ├── hooks/useModelSelect.ts     # 新增 - 模型选择 hook
+│   ├── components/ModelSelector.tsx # 新增 - 模型选择下拉框
+│   ├── components/Header.tsx        # 去掉 API Key 配置按钮
+│   ├── components/InputPanel.tsx    # 去掉 isConfigured 逻辑
+│   ├── App.tsx                      # 去掉 ApiConfigModal，加 ModelSelector
+│   └── types.ts                     # 去掉 Provider/apiKey 类型，加 ModelInfo
+├── vercel.json                      # Vercel 配置（新增）
+├── package.json                     # 更新 scripts 和依赖
+├── vite.config.ts                   # 去掉 proxy（Vercel 自动处理）
+└── blessings.json                   # 不变
+
+删除的文件：
+- src/hooks/useProviders.ts — 不再需要用户管理 API Key
+- src/components/ApiConfigModal.tsx — 不再需要
+- src/skills/promptBuilder.ts — 迁移到 lib/
+- src/skills/blessingStore.ts — 迁移到 lib/
+- server/ 目录 — 整个删除，功能由 api/ + lib/ 替代
+- deploy/ 目录 — 不需要（如果存在的话）
+- .env.example（根目录的）— 环境变量改在 Vercel Dashboard 设置
+
+---
+步骤 1：创建 Vercel Serverless Functions
+
+1.1 创建 lib/providers.ts
+
+从 server/providers.js 迁移，改为 TypeScript，改为从环境变量读取 API Key：
+
+// 每个 provider: { id, label, baseUrl, model, apiKeyEnv }
+// apiKeyEnv 是环境变量名，如 "DEEPSEEK_API_KEY"
+// getAvailableModels() — 只返回环境变量中配置了 key 的 provider
+// getProviderConfig(id) — 返回 { baseUrl, model, apiKey }
+
+保留现有 6 个 provider 配置（DeepSeek、OpenAI、智谱、月之暗面、通义、硅基流动）。
+
+1.2 创建 lib/promptBuilder.ts
+
+从 src/skills/promptBuilder.ts 复制，无需修改（纯逻辑，不依赖浏览器 API）。
+
+1.3 创建 lib/blessingStore.ts
+
+从 src/skills/blessingStore.ts 复制，修改 blessings.json 的导入方式：
+- 前端用的 import data from '../blessings.json'
+- 服务端改为 import { readFileSync } from 'fs' + JSON.parse，或直接用同样的 import（Vercel 支持
+  JSON import）
+
+1.4 创建 api/models.ts
+
+// GET /api/models
+// 调用 lib/providers.ts 的 getAvailableModels()
+// 返回 { models: [{ id, name, provider }] }
+
+1.5 创建 api/generate.ts（核心）
+
+SSE 流式 Serverless Function：
+export const config = { maxDuration: 60 };
+
+// POST /api/generate
+// 请求体: { model, relationship, style, length, name?, note?, reference? }
+// 1. 校验请求参数
+// 2. 从 lib/providers.ts 获取 provider 配置（含服务端 API Key）
+// 3. 从 lib/promptBuilder.ts 构建 prompt
+// 4. 从 lib/blessingStore.ts 获取 few-shot 示例
+// 5. 调用 LLM API（fetch + stream）
+// 6. SSE 格式返回: data: {"token":"马"}\n\n
+// 7. 结束: data: [DONE]\n\n
+
+关键：Vercel Serverless Functions 支持流式响应，用 res.write() + res.end()。
+
+1.6 创建 api/health.ts
+
+// GET /api/health → { status: "ok", timestamp }
+
+1.7 创建 vercel.json
+
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ],
+  "functions": {
+    "api/generate.ts": { "maxDuration": 60 }
+  }
+}
+
+---
+步骤 2：修改前端
+
+2.1 更新 src/types.ts
+
+- 删除 Provider 接口（{ id, label }）
+- 新增 ModelInfo：{ id: string, name: string, provider: string }
+- 保留 GenerateOptions、Relationship、Style、Length 等
+
+2.2 重写 src/services/llm.ts
+
+- 删除现有 createLLMStream(provider, apiKey, system, user, ...)
+- 新增 fetchModels(): Promise<ModelInfo[]> — GET /api/models
+- 新增 createGenerateStream(model, options, callbacks, signal) — POST /api/generate
+  - 不再传 provider 和 apiKey
+  - 直接传 { model, relationship, style, length, name, note, reference }
+  - SSE 解析逻辑基本复用现有代码
+
+2.3 新增 src/hooks/useModelSelect.ts
+
+- useEffect 中调用 fetchModels() 获取可用模型列表
+- localStorage 记住用户选择（key: "blessing-selected-model"）
+- 暴露：{ models, selectedModel, setSelectedModel, loading, error }
+
+2.4 新增 src/components/ModelSelector.tsx
+
+- 下拉选择框，显示模型名称
+- 按 provider 分组（如果多个 provider 有模型）
+- 沿用现有金色主题风格
+
+2.5 修改 src/hooks/useGenerate.ts
+
+- generate() 参数：从 (provider, apiKey, options) 改为 (model, options)
+- 删除前端 prompt 构建逻辑（buildPrompt 调用）
+- 删除前端 few-shot 获取逻辑（getBlessings 调用）
+- 改为调用新的 createGenerateStream(model, options, callbacks, signal)
+- 仍然保留 3 个并行流（每种 style 一个）的架构
+
+2.6 修改 src/App.tsx
+
+- 删除 useProviders 导入和调用
+- 删除 ApiConfigModal 渲染
+- 新增 useModelSelect 调用
+- 新增 ModelSelector 渲染（放在 Header 下方或 InputPanel 内）
+- generate 调用改为传 selectedModel
+
+2.7 修改 src/components/Header.tsx
+
+- 删除设置按钮（齿轮图标 + 红点指示器）
+- 删除 isConfigured / onConfigClick props
+
+2.8 修改 src/components/InputPanel.tsx
+
+- 删除 isConfigured prop 相关的按钮禁用逻辑
+- 生成按钮的禁用条件改为：未选择模型 || 未选择关系类型
+
+2.9 更新 vite.config.ts
+
+- 删除 server.proxy 配置（本地开发用 vercel dev，自动处理路由）
+
+2.10 更新 package.json
+
+- 添加 "vercel-build": "vite build" 到 scripts
+- 删除 "server" 和 "start" scripts（不再需要 Express）
+- 删除 express、express-rate-limit、helmet 依赖
+
+---
+步骤 3：部署到 Vercel
+
+3.1 初始化 Git 仓库（如果还没有）
+
+cd /home/luka/Projects/blessing
+git init
+git add -A
+git commit -m "Initial commit"
+
+3.2 推送到 GitHub
+
+gh repo create blessing --public --source=. --push
+（或手动在 GitHub 创建仓库后 push）
+
+3.3 连接 Vercel
+
+1. 登录 https://vercel.com
+2. Import GitHub 仓库
+3. Framework Preset 选 Vite
+4. Build Command: vite build
+5. Output Directory: dist
+
+3.4 设置环境变量（在 Vercel Dashboard）
+
+DEEPSEEK_API_KEY=sk-xxx
+OPENAI_API_KEY=sk-xxx
+ZHIPU_API_KEY=xxx
+MOONSHOT_API_KEY=xxx
+DASHSCOPE_API_KEY=xxx
+SILICONFLOW_API_KEY=xxx
+
+只需配置你有的 key，没配置的 provider 不会出现在模型列表中。
+
+3.5 部署
+
+推送到 GitHub 后 Vercel 自动部署。或用 CLI：
+npx vercel --prod
+
+3.6 绑定域名（可选）
+
+在 Vercel Dashboard → Settings → Domains 添加自定义域名，按提示设置 DNS CNAME 记录。
+- 无需 ICP 备案（Vercel 服务器在海外）
+- 自动 HTTPS（Vercel 自动配置 SSL 证书）
+
+---
+验证方式
+
+本地开发测试
+
+# 安装 Vercel CLI
+npm i -g vercel
+
+# 本地运行（同时启动 Vite 前端 + Serverless Functions）
+vercel dev
+
+# 测试 API
+curl http://localhost:3000/api/models
+curl -N -X POST http://localhost:3000/api/generate \
+  -H "Content-Type: application/json" \
+  -d '{"model":"deepseek-chat","relationship":"friend","style":"casual","length":"medium"}'
+
+部署后测试
+
+curl https://<your-app>.vercel.app/api/health
+curl https://<your-app>.vercel.app/api/models
+# 浏览器打开 https://<your-app>.vercel.app 验证完整功能
+
+关键检查项
+
+- 模型列表正常加载（/api/models 返回已配置的模型）
+- SSE 流式生成正常（逐字显示）
+- 取消生成功能正常（AbortController）
+- 3 种风格并行生成正常
+- 手机浏览器正常使用
+- 未配置 API Key 的 provider 不出现在列表中

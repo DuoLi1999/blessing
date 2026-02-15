@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Final Design - Home Screen (Gala Edition)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&amp;family=Noto+Serif+SC:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#B32428", // Deep Cinnabar
+                        "primary-dark": "#8a1c20",
+                        "accent-gold": "#D4AF37", // Matte Gold
+                        "gold-light": "#F0E6D2",
+                        "background-light": "#FEFCF8", // Warm Jade
+                        "card-bg": "#F2EEE5", // Relationship card background
+                        "text-main": "#2C2C2C", // Charcoal
+                        "text-muted": "#686868",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "serif": ["Noto Serif SC", "serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.375rem", 
+                        "lg": "0.5rem", 
+                        "xl": "0.75rem", 
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    borderWidth: {
+                        '0.5': '0.5px',
+                    },
+                    transitionDuration: {
+                        '300': '300ms',
+                    },
+                    backgroundImage: {
+                        'paper-texture': "url('https://www.transparenttextures.com/patterns/cream-paper.png')",
+                    },
+                    boxShadow: {
+                        'gala-lift': '0 20px 40px -12px rgba(179, 36, 40, 0.1), 0 0 0 1px rgba(212, 175, 55, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .bg-paper {
+            background-color: #FEFCF8;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+        .gala-pattern {
+            background-image: repeating-linear-gradient(45deg, #D4AF37 0, #D4AF37 1px, transparent 0, transparent 50%);
+            background-size: 20px 20px;
+            opacity: 0.1;
+        }
+        .snake-motif {
+            background-image: linear-gradient(90deg, transparent 50%, #D4AF37 50%),
+                              linear-gradient(0deg, transparent 50%, #D4AF37 50%);
+            background-size: 10px 10px;
+        }
+        .shimmer-btn {
+            position: relative;
+            overflow: hidden;
+            background-color: #B32428;
+            color: white;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .shimmer-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent 30%, rgba(255, 236, 179, 0.6) 50%, transparent 70%);
+            transition: all 0.8s ease-in-out;
+            z-index: 1;
+        }
+        .shimmer-btn:hover {
+            box-shadow: 0 10px 25px -5px rgba(179, 36, 40, 0.4);
+            transform: translateY(-1px);
+        }
+        .shimmer-btn:hover::before {
+            left: 100%;
+        }
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease-out, height 0.6s ease-out, opacity 0.6s ease-out;
+            opacity: 0;
+        }
+        .shimmer-btn:active::after {
+            width: 400px;
+            height: 400px;
+            opacity: 1;
+            transition: 0s;
+        }
+        .card-hover {
+            transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+            border-width: 0.5px;
+            border-color: rgba(212, 175, 55, 0.6);
+            background-color: #F2EEE5;
+        }
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.01);
+            background-color: #FEFCF8;
+            box-shadow: 0 20px 40px -12px rgba(179, 36, 40, 0.1), 0 0 0 1px rgba(212, 175, 55, 0.4);
+            border-color: #B32428;
+        }
+        input:checked ~ div .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+        input:checked ~ div {
+            background-color: #FEFCF8;
+            border-color: #B32428;
+            box-shadow: 0 15px 30px -5px rgba(179, 36, 40, 0.15), 0 0 0 1px rgba(179, 36, 40, 0.2);
+            transform: translateY(-2px);
+        }.gala-title {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+    </style>
+</head>
+<body class="font-display bg-paper text-text-main min-h-screen flex flex-col selection:bg-primary/20 selection:text-primary overflow-x-hidden">
+<div class="absolute top-0 left-0 w-full h-1 bg-primary z-50"></div>
+<div class="absolute top-1 left-0 w-full h-1 bg-accent-gold z-50"></div>
+<div class="fixed top-0 right-0 w-96 h-96 opacity-[0.04] pointer-events-none z-0">
+<svg class="w-full h-full rotate-12" fill="none" stroke="#D4AF37" stroke-width="0.5" viewBox="0 0 100 100">
+<path d="M50 0 C 80 20 100 50 100 50 C 80 80 50 100 50 100 C 20 80 0 50 0 50 C 20 20 50 0 50 0 Z"></path>
+<path d="M50 10 C 75 25 90 50 90 50 C 75 75 50 90 50 90 C 25 75 10 50 10 50 C 25 25 50 10 50 10 Z" opacity="0.6"></path>
+<rect fill="#D4AF37" height="10" opacity="0.1" transform="rotate(45 50 50)" width="10" x="45" y="45"></rect>
+</svg>
+</div>
+<div class="fixed bottom-0 left-0 w-64 h-64 opacity-[0.04] pointer-events-none z-0">
+<svg class="w-full h-full -rotate-12" fill="none" stroke="#D4AF37" stroke-width="0.5" viewBox="0 0 100 100">
+<circle cx="50" cy="50" r="45"></circle>
+<circle cx="50" cy="50" r="35" stroke-dasharray="2 2"></circle>
+<path d="M50 5 L50 95 M5 50 L95 50" stroke-opacity="0.5"></path>
+</svg>
+</div>
+<nav class="w-full px-6 py-8 flex justify-between items-center relative z-10 max-w-7xl mx-auto">
+<div class="flex items-center gap-5">
+<div class="w-14 h-14 bg-white rounded-lg flex items-center justify-center shadow-lg border border-accent-gold/40 relative overflow-hidden group hover:shadow-xl transition-all duration-300">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+<svg class="w-10 h-10 text-primary relative z-10" fill="none" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M30 30H70C75.5228 30 80 34.4772 80 40V50C80 55.5228 75.5228 60 70 60H40C34.4772 60 30 64.4772 30 70V70C30 75.5228 34.4772 80 40 80H80" stroke="#B32428" stroke-linecap="square" stroke-width="8"></path>
+<path d="M30 30V40" stroke="#B32428" stroke-linecap="square" stroke-width="8"></path>
+<circle cx="55" cy="45" fill="#D4AF37" r="4"></circle>
+</svg>
+<div class="absolute -bottom-2 -right-2 w-8 h-8 bg-accent-gold/10 rounded-full blur-xl"></div>
+</div>
+<div class="flex flex-col">
+<h1 class="text-3xl gala-title tracking-tight text-primary leading-none" style="text-shadow: 0px 1px 0px rgba(212, 175, 55, 0.1);">
+                    新春祝福
+                </h1>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="h-px w-4 bg-accent-gold"></span>
+<span class="text-[0.65rem] font-bold tracking-[0.3em] text-accent-gold uppercase font-serif">
+                        2026 Gala Edition
+                    </span>
+<span class="h-px w-4 bg-accent-gold"></span>
+</div>
+</div>
+</div>
+<div class="flex gap-4 items-center">
+<button class="text-text-muted hover:text-primary transition-colors text-xs font-bold tracking-widest uppercase duration-300 border-b border-transparent hover:border-primary pb-0.5">History</button>
+<button class="flex items-center gap-2 px-5 py-2 border border-accent-gold/30 rounded-full hover:border-accent-gold transition-all duration-300 bg-white/60 backdrop-blur-md hover:shadow-md group">
+<span class="material-icons text-primary text-sm group-hover:scale-110 transition-transform">translate</span>
+<span class="text-xs font-serif font-bold text-text-main">EN / ZH</span>
+</button>
+</div>
+</nav>
+<main class="flex-grow container mx-auto px-6 py-8 max-w-6xl relative z-10">
+<div class="text-center mb-16 space-y-8 relative">
+<div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full w-px h-16 bg-gradient-to-b from-transparent to-accent-gold/30"></div>
+<div class="inline-flex items-center gap-3 mb-2 px-6 py-2 bg-[#FBF9F4] border border-[#EBE3D0] rounded-full shadow-sm">
+<span class="text-accent-gold font-serif font-black text-lg">乙巳</span>
+<span class="w-1 h-1 bg-primary rounded-full"></span>
+<span class="text-xs font-bold text-primary tracking-[0.25em] uppercase">Year of the Snake</span>
+</div>
+<h2 class="text-5xl md:text-7xl font-serif text-text-main font-black tracking-tight leading-tight">
+                Craft Elegant <span class="text-primary italic font-serif relative inline-block px-2">
+                    Blessings
+                    <svg class="absolute bottom-1 left-0 w-full h-3 text-accent-gold/60" preserveAspectRatio="none" viewBox="0 0 100 10">
+<path d="M0 5 Q 50 10 100 5" fill="none" stroke="currentColor" stroke-width="1.5"></path>
+</svg>
+</span>
+</h2>
+<p class="text-text-muted text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                Generate culturally refined, perfectly phrased wishes for your loved ones using high-end AI, styled with the geometric grandeur of the Spring Gala.
+            </p>
+</div>
+<div class="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/30 to-transparent mb-16 relative">
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rotate-45 border border-accent-gold bg-paper"></div>
+</div>
+<div class="grid lg:grid-cols-12 gap-16 items-start">
+<div class="lg:col-span-7 space-y-12">
+<section>
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-2xl font-serif font-bold text-text-main flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-sans">1</span>
+                            Target Audience
+                        </h3>
+<div class="h-px flex-grow mx-4 bg-gray-200"></div>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-5">
+<label class="cursor-pointer group">
+<input checked="" class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">elderly</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">Elders</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Respectful &amp; Longevity</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">favorite</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">Partner</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Romantic &amp; Future</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">work</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">Business</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Success &amp; Wealth</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">celebration</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">Friends</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Joy &amp; Bond</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">child_care</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">Juniors</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Growth &amp; Studies</p>
+</div>
+</label>
+<label class="cursor-pointer group">
+<input class="peer sr-only" name="relationship" type="radio"/>
+<div class="relative h-full p-5 rounded-xl card-hover">
+<div class="absolute top-3 right-3 opacity-0 check-icon transition-all duration-300 transform scale-75">
+<span class="material-icons text-primary text-lg">check_circle</span>
+</div>
+<div class="w-10 h-10 mb-4 bg-white border border-accent-gold/20 rounded-lg flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300 shadow-sm">
+<span class="material-icons text-primary text-xl">auto_awesome</span>
+</div>
+<h3 class="font-serif font-bold text-lg text-text-main mb-1">General</h3>
+<p class="text-[0.7rem] text-text-muted leading-relaxed uppercase tracking-wider">Universal Wishes</p>
+</div>
+</label>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-2xl font-serif font-bold text-text-main flex items-center gap-3">
+<span class="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-sans">2</span>
+                            Specific Context
+                        </h3>
+<div class="h-px flex-grow mx-4 bg-gray-200"></div>
+<span class="text-xs text-text-muted italic">Optional</span>
+</div>
+<div class="relative group">
+<div class="absolute -top-1 -left-1 w-4 h-4 border-t border-l border-accent-gold pointer-events-none opacity-60"></div>
+<div class="absolute -top-1 -right-1 w-4 h-4 border-t border-r border-accent-gold pointer-events-none opacity-60"></div>
+<div class="absolute -bottom-1 -left-1 w-4 h-4 border-b border-l border-accent-gold pointer-events-none opacity-60"></div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 border-b border-r border-accent-gold pointer-events-none opacity-60"></div>
+<textarea class="w-full bg-[#FBF9F4] border border-accent-gold/30 focus:border-primary focus:ring-1 focus:ring-primary/20 px-6 py-5 text-lg resize-none placeholder-gray-400 transition-all duration-300 rounded-lg shadow-inner" placeholder="E.g., wishing for a promotion, good health, or a new home..." rows="3"></textarea>
+</div>
+</section>
+<section>
+<div class="flex items-center gap-6 mb-6">
+<h3 class="text-base font-bold text-text-main uppercase tracking-widest font-sans">Style Tone</h3>
+<div class="flex gap-3">
+<button class="px-6 py-2 rounded-full bg-primary text-white text-sm shadow-md border border-transparent transition-all duration-300 hover:bg-primary-dark font-medium">Poetic</button>
+<button class="px-6 py-2 rounded-full bg-white border border-gray-200 text-text-muted hover:text-primary hover:border-primary hover:bg-primary/5 transition-all duration-300 text-sm font-medium">Modern</button>
+<button class="px-6 py-2 rounded-full bg-white border border-gray-200 text-text-muted hover:text-primary hover:border-primary hover:bg-primary/5 transition-all duration-300 text-sm font-medium">Witty</button>
+</div>
+</div>
+</section>
+<div class="pt-6">
+<button class="shimmer-btn w-full py-5 rounded-lg font-serif font-bold text-xl tracking-widest hover:shadow-2xl transition-all duration-300 transform active:scale-[0.99] flex items-center justify-center gap-3 border border-red-900/20 group">
+<span class="material-icons text-accent-gold group-hover:rotate-12 transition-transform duration-500">auto_awesome</span>
+                        生成祝福语
+                    </button>
+</div>
+</div>
+<div class="lg:col-span-5 relative mt-12 lg:mt-0">
+<div class="absolute -top-6 -right-6 w-full h-full border border-accent-gold/20 rounded-none pointer-events-none"></div>
+<div class="absolute -bottom-6 -left-6 w-full h-full border border-accent-gold/20 rounded-none pointer-events-none"></div>
+<div class="relative bg-white p-2 rounded-none shadow-2xl transition-all duration-300" style="box-shadow: 0 40px 80px -20px rgba(179, 36, 40, 0.2);">
+<div class="relative border border-[#EBE3D0] h-[550px] bg-[#FEFCF8] p-8 flex flex-col items-center justify-center overflow-hidden">
+<div class="absolute inset-4 border border-accent-gold/20 pointer-events-none"></div>
+<svg class="absolute top-4 left-4 w-12 h-12 text-primary opacity-90" fill="none" viewBox="0 0 100 100">
+<path d="M0 0 L40 0 L40 10 L10 10 L10 40 L0 40 Z" fill="currentColor"></path>
+</svg>
+<svg class="absolute top-4 right-4 w-12 h-12 text-primary opacity-90 rotate-90" fill="none" viewBox="0 0 100 100">
+<path d="M0 0 L40 0 L40 10 L10 10 L10 40 L0 40 Z" fill="currentColor"></path>
+</svg>
+<svg class="absolute bottom-4 right-4 w-12 h-12 text-primary opacity-90 rotate-180" fill="none" viewBox="0 0 100 100">
+<path d="M0 0 L40 0 L40 10 L10 10 L10 40 L0 40 Z" fill="currentColor"></path>
+</svg>
+<svg class="absolute bottom-4 left-4 w-12 h-12 text-primary opacity-90 -rotate-90" fill="none" viewBox="0 0 100 100">
+<path d="M0 0 L40 0 L40 10 L10 10 L10 40 L0 40 Z" fill="currentColor"></path>
+</svg>
+<div class="relative z-10 text-center space-y-6 max-w-xs">
+<div class="w-20 h-20 mx-auto bg-gradient-to-br from-primary/5 to-transparent rounded-full flex items-center justify-center border border-accent-gold/20">
+<span class="material-icons text-accent-gold text-4xl opacity-80">history_edu</span>
+</div>
+<div>
+<h4 class="text-primary font-serif font-bold text-lg mb-2">Your Blessing</h4>
+<p class="font-serif text-lg text-text-muted italic leading-relaxed">
+                                    The generated message will appear here, inscribed with elegance and grace...
+                                </p>
+</div>
+</div>
+<div class="absolute bottom-10 opacity-10 pointer-events-none">
+<span class="text-8xl font-serif font-black text-primary">福</span>
+</div>
+<div class="absolute bottom-8 right-8">
+<div class="w-10 h-10 border-2 border-primary flex items-center justify-center opacity-40">
+<span class="text-primary font-serif font-bold text-[0.5rem] tracking-widest uppercase writing-vertical-rl">LUNAR</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-8 flex justify-center gap-8">
+<button class="flex flex-col items-center gap-2 group opacity-60 hover:opacity-100 transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-primary group-hover:text-primary group-hover:shadow-lg transition-all duration-300">
+<span class="material-icons text-lg">content_copy</span>
+</div>
+<span class="text-xs font-bold text-text-muted uppercase tracking-wider">Copy</span>
+</button>
+<button class="flex flex-col items-center gap-2 group opacity-60 hover:opacity-100 transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-primary group-hover:text-primary group-hover:shadow-lg transition-all duration-300">
+<span class="material-icons text-lg">image</span>
+</div>
+<span class="text-xs font-bold text-text-muted uppercase tracking-wider">Save</span>
+</button>
+<button class="flex flex-col items-center gap-2 group opacity-60 hover:opacity-100 transition-all duration-300">
+<div class="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center group-hover:border-primary group-hover:text-primary group-hover:shadow-lg transition-all duration-300">
+<span class="material-icons text-lg">share</span>
+</div>
+<span class="text-xs font-bold text-text-muted uppercase tracking-wider">Share</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<footer class="mt-auto py-12 text-center relative z-10 border-t border-accent-gold/10 bg-white/40 backdrop-blur-sm">
+<div class="flex items-center justify-center gap-4 mb-6 opacity-40">
+<div class="h-px bg-gradient-to-r from-transparent via-accent-gold to-transparent w-24"></div>
+<div class="w-2 h-2 border border-accent-gold rotate-45 bg-white"></div>
+<div class="h-px bg-gradient-to-r from-transparent via-accent-gold to-transparent w-24"></div>
+</div>
+<p class="text-xs text-primary/60 font-serif tracking-[0.2em] uppercase mb-2 font-bold">Stitch Optimal Palette</p>
+<p class="text-[0.65rem] text-text-muted/60 uppercase tracking-widest">© 2026 Lunar AI Lab. All rights reserved.</p>
+</footer>
+<div class="fixed bottom-0 left-0 w-full h-32 bg-gradient-to-t from-white to-transparent pointer-events-none z-0"></div>
+
+</body></html>

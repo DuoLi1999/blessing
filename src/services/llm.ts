@@ -32,7 +32,7 @@ export function createGenerateStream(
   // Build prompt locally
   const { system, user } = buildPrompt(options, fewShot)
 
-  const url = `${apiConfig.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+  const url = `${apiConfig.baseUrl.replace(/\/+$/, '')}/chat/completions`
 
   fetch(url, {
     method: 'POST',
