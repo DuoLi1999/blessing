@@ -49,6 +49,12 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     baseUrl: 'https://api.baichuan-ai.com/v1',
     model: 'Baichuan4',
   },
+  {
+    id: 'minimax',
+    name: 'MiniMax',
+    baseUrl: 'https://api.minimax.chat/v1',
+    model: 'MiniMax-Text-01',
+  },
   // 海外
   {
     id: 'openai',
