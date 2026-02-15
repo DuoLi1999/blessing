@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install",
+  "installCommand": "pnpm install",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
