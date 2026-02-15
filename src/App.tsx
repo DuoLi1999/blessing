@@ -15,8 +15,8 @@ const defaultConfig = getDefaultApiConfig()
 
 export default function App() {
   const { apiConfig, setApiConfig, clearApiConfig } = useApiConfig()
-  const activeConfig = apiConfig ?? defaultConfig
-  const isUsingDefault = !apiConfig && !!defaultConfig
+  const activeConfig = apiConfig ?? defaultConfig!
+  const isUsingDefault = !apiConfig
   const { results, overallStatus, generate, cancel, reset } = useGenerate(activeConfig)
 
   const [relationship, setRelationship] = useState<Relationship>('elder')
@@ -26,17 +26,11 @@ export default function App() {
   const [reference, setReference] = useState('')
 
   const [showQueue, setShowQueue] = useState(false)
-  const [quotaExhausted, setQuotaExhausted] = useState(false)
   const [showConfigModal, setShowConfigModal] = useState(false)
 
   const handleGenerate = useCallback(() => {
-    if (activeConfig) {
-      generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
-      return
-    }
-    // No config at all — show queue page
-    setShowQueue(true)
-  }, [activeConfig, generate, relationship, length, name, note, reference])
+    generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
+  }, [generate, relationship, length, name, note, reference])
 
   const handleReset = useCallback(() => {
     reset()
@@ -48,7 +42,6 @@ export default function App() {
 
   const handleOpenConfig = useCallback(() => {
     setShowQueue(false)
-    setQuotaExhausted(false)
     setShowConfigModal(true)
   }, [])
 
@@ -71,7 +64,6 @@ export default function App() {
   useEffect(() => {
     if (isUsingDefault && allFailed && showingResult) {
       reset()
-      setQuotaExhausted(true)
       setShowQueue(true)
     }
   }, [isUsingDefault, allFailed, showingResult, reset])
@@ -160,8 +152,7 @@ export default function App() {
       {showQueue && (
         <QueuePage
           onConfigureKey={handleOpenConfig}
-          onClose={() => { setShowQueue(false); setQuotaExhausted(false) }}
-          exhausted={quotaExhausted}
+          onClose={() => setShowQueue(false)}
         />
       )}
 
