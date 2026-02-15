@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { model, relationship, style, length, name, note, reference } = req.body || {}
+  const { model, relationship, style, length, name, note, reference, userApiKey, userBaseUrl, userModel } = req.body || {}
 
   // Validate required fields
   if (!model || !relationship || !style || !length) {
@@ -35,10 +35,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: `无效的长度: ${length}` })
   }
 
-  // Get provider config (includes server-side API key)
-  const providerConfig = getProviderConfigByModel(model)
-  if (!providerConfig) {
-    return res.status(400).json({ error: `模型不可用: ${model}` })
+  // Determine API credentials: user-provided or server-side
+  let apiKey: string
+  let baseUrl: string
+  let actualModel: string
+
+  if (userApiKey && userBaseUrl && userModel) {
+    apiKey = userApiKey
+    baseUrl = userBaseUrl
+    actualModel = userModel
+  } else {
+    const providerConfig = getProviderConfigByModel(model)
+    if (!providerConfig) {
+      return res.status(400).json({ error: `模型不可用: ${model}` })
+    }
+    apiKey = providerConfig.apiKey
+    baseUrl = providerConfig.baseUrl
+    actualModel = providerConfig.model
   }
 
   // Get few-shot examples
@@ -56,17 +69,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     fewShot,
   )
 
-  const url = `${providerConfig.baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
+  const url = `${baseUrl.replace(/\/+$/, '')}/v1/chat/completions`
 
   try {
     const upstream = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${providerConfig.apiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: providerConfig.model,
+        model: actualModel,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },

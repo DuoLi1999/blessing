@@ -2,16 +2,22 @@ import { useState, useCallback } from 'react'
 import type { Relationship, Length } from './types'
 import { useModelSelect } from './hooks/useModelSelect'
 import { useGenerate } from './hooks/useGenerate'
+import { useFreeUsage } from './hooks/useFreeUsage'
+import { useApiConfig } from './hooks/useApiConfig'
 import Header from './components/Header'
 import ModelSelector from './components/ModelSelector'
 import InputPanel from './components/InputPanel'
 import ResultPanel from './components/ResultPanel'
 import Particles from './components/Particles'
 import ErrorBoundary from './components/ErrorBoundary'
+import QueuePage from './components/QueuePage'
+import ApiConfigModal from './components/ApiConfigModal'
 
 export default function App() {
   const { models, selectedModel, setSelectedModel, loading: modelsLoading, error: modelsError } = useModelSelect()
-  const { results, overallStatus, generate, cancel, reset } = useGenerate(selectedModel)
+  const { apiConfig, setApiConfig, clearApiConfig } = useApiConfig()
+  const { results, overallStatus, generate, cancel, reset } = useGenerate(selectedModel, apiConfig)
+  const { freeUsed, markFreeUsed } = useFreeUsage()
 
   const [relationship, setRelationship] = useState<Relationship>('elder')
   const [length, setLength] = useState<Length>('medium')
@@ -19,12 +25,24 @@ export default function App() {
   const [note, setNote] = useState('')
   const [reference, setReference] = useState('')
 
-  const canGenerate = !!selectedModel
+  const [showQueue, setShowQueue] = useState(false)
+  const [showConfigModal, setShowConfigModal] = useState(false)
+
+  const canGenerate = !!selectedModel || !!apiConfig
 
   const handleGenerate = useCallback(() => {
-    if (!canGenerate) return
+    if (apiConfig) {
+      generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
+      return
+    }
+    if (!selectedModel) return
+    if (freeUsed) {
+      setShowQueue(true)
+      return
+    }
+    markFreeUsed()
     generate({ relationship, length, name: name.trim() || undefined, note: note.trim() || undefined, reference: reference.trim() || undefined })
-  }, [canGenerate, generate, relationship, length, name, note, reference])
+  }, [apiConfig, selectedModel, freeUsed, markFreeUsed, generate, relationship, length, name, note, reference])
 
   const handleReset = useCallback(() => {
     reset()
@@ -33,6 +51,23 @@ export default function App() {
   const handleCopy = useCallback(() => {
     // Analytics or feedback could go here
   }, [])
+
+  const handleOpenConfig = useCallback(() => {
+    setShowQueue(false)
+    setShowConfigModal(true)
+  }, [])
+
+  const handleSaveConfig = useCallback((config: typeof apiConfig) => {
+    if (config) {
+      setApiConfig(config)
+    }
+    setShowConfigModal(false)
+  }, [setApiConfig])
+
+  const handleClearConfig = useCallback(() => {
+    clearApiConfig()
+    setShowConfigModal(false)
+  }, [clearApiConfig])
 
   const showingResult = overallStatus !== 'idle'
 
@@ -45,7 +80,7 @@ export default function App() {
         <div className="absolute top-0 left-0 w-full h-0.5 bg-primary z-50" />
         <div className="absolute top-0.5 left-0 w-full h-0.5 bg-accent-gold z-50" />
 
-        <Header />
+        <Header hasApiConfig={!!apiConfig} onOpenConfig={handleOpenConfig} />
 
         <main className="flex-grow px-4 pb-12 max-w-lg mx-auto w-full relative z-10">
           {/* Title section */}
@@ -69,16 +104,18 @@ export default function App() {
             </p>
           </div>
 
-          {/* Model Selector */}
-          <div className="mb-6">
-            <ModelSelector
-              models={models}
-              selectedModel={selectedModel}
-              onModelChange={setSelectedModel}
-              loading={modelsLoading}
-              error={modelsError}
-            />
-          </div>
+          {/* Model Selector - hidden when user has their own API config */}
+          {!apiConfig && (
+            <div className="mb-6">
+              <ModelSelector
+                models={models}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                loading={modelsLoading}
+                error={modelsError}
+              />
+            </div>
+          )}
 
           {/* Divider */}
           <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/30 to-transparent mb-8 relative">
@@ -126,6 +163,24 @@ export default function App() {
           </p>
         </footer>
       </div>
+
+      {/* Queue overlay */}
+      {showQueue && (
+        <QueuePage
+          onConfigureKey={handleOpenConfig}
+          onClose={() => setShowQueue(false)}
+        />
+      )}
+
+      {/* API Config modal */}
+      {showConfigModal && (
+        <ApiConfigModal
+          currentConfig={apiConfig}
+          onSave={handleSaveConfig}
+          onClear={handleClearConfig}
+          onClose={() => setShowConfigModal(false)}
+        />
+      )}
     </ErrorBoundary>
   )
 }

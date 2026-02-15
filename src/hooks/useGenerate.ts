@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import type { Style, GenerateOptions } from '../types'
+import type { Style, GenerateOptions, ApiConfig } from '../types'
 import { STYLES } from '../types'
 import { createGenerateStream } from '../services/llm'
 
@@ -23,7 +23,7 @@ function makeInitial(): StyleResult[] {
   }))
 }
 
-export function useGenerate(selectedModel: string) {
+export function useGenerate(selectedModel: string, apiConfig?: ApiConfig | null) {
   const [results, setResults] = useState<StyleResult[]>(makeInitial)
   const abortsRef = useRef<AbortController[]>([])
 
@@ -67,9 +67,10 @@ export function useGenerate(selectedModel: string) {
           },
         },
         controller.signal,
+        apiConfig,
       )
     })
-  }, [selectedModel, updateOne])
+  }, [selectedModel, apiConfig, updateOne])
 
   const cancel = useCallback(() => {
     abortsRef.current.forEach((c) => c.abort())

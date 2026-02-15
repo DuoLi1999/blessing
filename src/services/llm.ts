@@ -1,4 +1,4 @@
-import type { ModelInfo } from '../types'
+import type { ModelInfo, ApiConfig } from '../types'
 
 export interface StreamCallbacks {
   onToken: (token: string) => void
@@ -29,11 +29,19 @@ export function createGenerateStream(
   },
   callbacks: StreamCallbacks,
   signal?: AbortSignal,
+  userCredentials?: ApiConfig | null,
 ): void {
+  const body: Record<string, unknown> = { model, ...options }
+  if (userCredentials) {
+    body.userApiKey = userCredentials.apiKey
+    body.userBaseUrl = userCredentials.baseUrl
+    body.userModel = userCredentials.model
+  }
+
   fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, ...options }),
+    body: JSON.stringify(body),
     signal,
   })
     .then(async (response) => {

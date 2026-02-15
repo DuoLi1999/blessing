@@ -8,6 +8,12 @@ export interface ModelInfo {
   provider: string
 }
 
+export interface ApiConfig {
+  apiKey: string
+  baseUrl: string
+  model: string
+}
+
 export interface GenerateOptions {
   relationship: Relationship
   style: Style
