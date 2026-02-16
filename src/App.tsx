@@ -117,6 +117,33 @@ export default function App() {
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rotate-45 border border-accent-gold bg-bg-warm" />
           </div>
 
+          {/* How to use guide - only show on input screen */}
+          {!showingResult && (
+            <div className="mb-6 px-1">
+              <div className="flex items-center gap-3 text-xs text-text-muted">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[0.6rem] font-bold flex items-center justify-center">1</span>
+                  <span>选择关系</span>
+                </div>
+                <span className="text-accent-gold/40">›</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[0.6rem] font-bold flex items-center justify-center">2</span>
+                  <span>填写信息</span>
+                </div>
+                <span className="text-accent-gold/40">›</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[0.6rem] font-bold flex items-center justify-center">3</span>
+                  <span>生成祝福</span>
+                </div>
+                <span className="text-accent-gold/40">›</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary text-[0.6rem] font-bold flex items-center justify-center">4</span>
+                  <span>复制发送</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Main content: Input or Result based on state */}
           {!showingResult ? (
             <InputPanel
