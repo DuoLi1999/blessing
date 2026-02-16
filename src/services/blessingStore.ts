@@ -75,7 +75,7 @@ export function getBlessings(
   }
 
   // Level 4: cross-relationship
-  const rels: Relationship[] = ['elder', 'colleague', 'leader', 'friend', 'partner', 'customer']
+  const rels: Relationship[] = ['elder', 'junior', 'colleague', 'classmate', 'leader', 'friend', 'partner', 'customer']
   const crossRel: BlessingEntry[] = []
   for (const r of rels) {
     if (r === rel) continue

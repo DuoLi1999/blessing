@@ -1,4 +1,4 @@
-export type Relationship = 'elder' | 'colleague' | 'leader' | 'friend' | 'partner' | 'customer'
+export type Relationship = 'elder' | 'junior' | 'colleague' | 'classmate' | 'leader' | 'friend' | 'partner' | 'customer'
 export type Style = 'normal' | 'literary' | 'abstract'
 export type Length = 'short' | 'medium' | 'long'
 
@@ -43,7 +43,9 @@ export interface LengthMeta {
 
 export const RELATIONSHIPS: RelationshipMeta[] = [
   { id: 'elder', label: '长辈', icon: '🧓', desc: '恭敬温暖' },
+  { id: 'junior', label: '晚辈', icon: '🧒', desc: '亲切关爱' },
   { id: 'colleague', label: '同事', icon: '🤝', desc: '友好默契' },
+  { id: 'classmate', label: '同学', icon: '🎓', desc: '青春回忆' },
   { id: 'leader', label: '领导', icon: '💼', desc: '尊重专业' },
   { id: 'friend', label: '朋友', icon: '🎉', desc: '轻松有梗' },
   { id: 'partner', label: '恋人', icon: '❤️', desc: '甜蜜浪漫' },
